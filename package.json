@@ -11,14 +11,21 @@
   "author": "Maximilian Schwarzmüller",
   "license": "ISC",
   "devDependencies": {
-    "nodemon": "^1.18.3"
+    "dotenv": "^16.3.1",
+    "nodemon": "^1.18.3",
+    "validator": "^13.11.0"
   },
   "dependencies": {
     "body-parser": "^1.18.3",
     "ejs": "^2.6.1",
     "express": "^4.18.2",
     "express-handlebars": "^3.0.0",
+    "mongodb": "^6.1.0",
+    "mongoose": "^7.5.3",
+    "mysql2": "^3.6.1",
     "pg": "^8.11.3",
-    "pug": "^2.0.3"
+    "pg-promise": "^11.5.4",
+    "pug": "^2.0.3",
+    "sequelize": "^6.33.0"
   }
 }
