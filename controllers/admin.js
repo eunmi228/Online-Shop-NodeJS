@@ -27,16 +27,16 @@ exports.postAddProduct = (req, res, next) => {
                 description: description
             },
             pageTitle: 'Add Product',
-            path: '/admin/edit-product',
+            path: '/admin/add-product',
             editing: false,
             hasError: true,
             errorMessage: errors.array()[0].msg
         });
     }
-    const product = new Product({ 
-        title: title, 
-        price: price, 
-        description: description, 
+    const product = new Product({
+        title: title,
+        price: price,
+        description: description,
         imageUrl: imageUrl,
         userId: req.user
     });
@@ -46,7 +46,28 @@ exports.postAddProduct = (req, res, next) => {
             console.log(result);
             res.redirect('/admin/products');
         })
-        .catch(err => console.log(err));
+        .catch(err => {
+            // return res.status(500).render('admin/edit-product', { // 500: server-side issue occurs
+            //     product: {
+            //         title: title,
+            //         imageUrl: imageUrl,
+            //         price: price,
+            //         description: description
+            //     },
+            //     pageTitle: 'Add Product',
+            //     path: '/admin/add-product',
+            //     editing: false,
+            //     hasError: true,
+            //     errorMessage: 'Database operation failed, please try again.'
+            // });
+
+            // res.redirect('/500'); // render this page for bigger issue.
+
+            const error = new Error(err);
+            error.httpStatusCode = 500;
+            return next(error); //  return next with error, skip all other middlewares and move error handling middleware
+        });
+
 };
 
 exports.getEditProduct = (req, res, next) => {
@@ -69,7 +90,11 @@ exports.getEditProduct = (req, res, next) => {
                 errorMessage: null
             });
         })
-        .catch(err => console.log(err));
+        .catch(err => {
+            const error = new Error(err);
+            error.httpStatusCode = 500;
+            return next(error);
+        });
 }
 
 exports.postEditProduct = (req, res, next) => {
@@ -78,7 +103,7 @@ exports.postEditProduct = (req, res, next) => {
     const updatedImageUrl = req.body.imageUrl;
     const updatedPrice = req.body.price;
     const updatedDesc = req.body.description;
-    
+
     const errors = validationResult(Req);
     if (!errors) {
         return res.status(422).render('admin/edit-product', {
@@ -98,29 +123,39 @@ exports.postEditProduct = (req, res, next) => {
     }
 
     Product.findById(prodId)
-    .then(product => {
-        if (product.userId.toString() !== req.user._id.toString()) { // only updated by the user who created this product
-            return res.redirect('/');
-        }
-        product.title = updatedTitle;
-        product.imageUrl = updatedImageUrl;
-        product.price = updatedPrice;
-        product.description = updatedDesc;
-        return product.save()
-        .then(res.redirect('/admin/products'));
-    }).catch(err => console.log(err));
+        .then(product => {
+            if (product.userId.toString() !== req.user._id.toString()) { // only updated by the user who created this product
+                return res.redirect('/');
+            }
+            product.title = updatedTitle;
+            product.imageUrl = updatedImageUrl;
+            product.price = updatedPrice;
+            product.description = updatedDesc;
+            return product.save()
+                .then(res.redirect('/admin/products'));
+        })
+        .catch(err => {
+            const error = new Error(err);
+            error.httpStatusCode = 500;
+            return next(error);
+        });
 }
 
 exports.postDeleteProduct = (req, res, next) => {
     const prodId = req.body.productId;
-    Product.deleteOne({_id: prodId, userId: req.user._id}) // only deleted by the user who created this product
+    Product.deleteOne({ _id: prodId, userId: req.user._id }) // only deleted by the user who created this product
         .then(
             res.redirect('/admin/products')
-        ).catch(err => console.log(err));
+        )
+        .catch(err => {
+            const error = new Error(err);
+            error.httpStatusCode = 500;
+            return next(error);
+        });
 }
 
 exports.getProducts = (req, res, next) => {
-    Product.find({userId: req.user._id}) // show admin products that is only created by this user
+    Product.find({ userId: req.user._id }) // show admin products that is only created by this user
         .then(products => {
             res.render('admin/products', {
                 prods: products,
@@ -132,6 +167,8 @@ exports.getProducts = (req, res, next) => {
             });
         })
         .catch(err => {
-            console.log(err);
-        })
+            const error = new Error(err);
+            error.httpStatusCode = 500;
+            return next(error);
+        });
 }

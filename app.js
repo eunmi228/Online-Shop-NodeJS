@@ -38,19 +38,6 @@ app.use(session({secret: 'my secret', resave: false, saveUninitialized: false, s
 app.use(csrfProtection);
 app.use(flash());
 
-app.use((req, res, next) => {
-    if(!req.session.user){
-        return next();
-    }
-    User.findById(req.session.user._id)
-    .then(user => {
-        req.user = user;
-        console.log(req.user);
-        next();
-    })
-    .catch(err => console.log(err));
-});
-
 // set local variables that are passed into the views
 // for every request, the following fields will be set for the views
 app.use((req, res, next) => {
@@ -58,13 +45,38 @@ app.use((req, res, next) => {
     res.locals.csrfToken = req.csrfToken();
     next();
 })
+
+app.use((req, res, next) => {
+    if(!req.session.user){
+        return next();
+    }
+    User.findById(req.session.user._id)
+    .then(user => {
+        if (!user) { // user stores in session but not in db
+            return next();
+        }
+        req.user = user;
+        console.log(req.user);
+        next();
+    })
+    .catch(err => {
+        // throw new Error(err); // throw an error in side of async code doesn't reach to error handling middleware
+        next(new Error(err)); // throw an error instead of logging
+    });
+});
+
+
 app.use('/admin', adminRoutes);
 app.use(shopRoutes);
 app.use(authRoutes);
 
+app.get('/500', errorController.get500);
 
 app.use(errorController.get404);
 
+app.use((error, req, res, next) => { // error handling middleware
+    res.status(error.httpStatusCode).render('500', { pageTitle: 'Error!' , path: '/500'});
+})
 mongoose.connect(MONGODB_URI)
 .then(() => {
     app.listen(3000);
