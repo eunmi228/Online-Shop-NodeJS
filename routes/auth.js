@@ -1,5 +1,5 @@
 const express = require('express');
-const { body } = require('express-validator/check');
+const { check, body } = require('express-validator');
 
 const authController = require('../controllers/auth');
 const User = require('../models/user');
@@ -26,11 +26,6 @@ router.post(
     check('email')
         .isEmail()
         .withMessage('Please enter a valid email.')
-        .normalizeEmail(), // sanitize input email
-    body('password',
-        'Please enter a password with only numbers and text and at least 5 characters.') // default error message for all validators
-        .isLength({ min: 5 })
-        .isAlphanumeric()
         .custom((value, { req }) => {
             return User.findOne({ email: value })
                 .then(userDoc => {
@@ -39,6 +34,12 @@ router.post(
                     }
                 })
         })
+        .normalizeEmail(), // sanitize input email
+    body('password',
+        'Please enter a password with only numbers and text and at least 5 characters.') // default error message for all validators
+        .isLength({ min: 5 })
+        .isAlphanumeric()
+        
         .trim(), // check the password in the body of the request
     body('confirmPassword').trim().custom((value, { req }) => { // customize validation
         if (value !== req.body.password) {

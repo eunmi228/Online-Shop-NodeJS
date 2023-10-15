@@ -10,7 +10,7 @@ const mailchimp = require('@mailchimp/mailchimp_transactional')(mailchimp_api_ke
 const User = require('../models/user');
 const { resolveHostname } = require('nodemailer/lib/shared');
 
-const { validationResult } = require('express-validator/check');
+const { validationResult } = require('express-validator');
 
 const transporter = nodemailer.createTransport(mailchimp);
 
